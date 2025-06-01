@@ -71,15 +71,21 @@ def generate_short_reads(genome, read_length=100, num_reads=1000, overlap=False,
     reads = []
 
     if overlap:
-        for i in range(0, genome_length - read_length + 1, step):
-            read = genome[i:i + read_length]
+        for i in range(0, genome_length - read_length + step, step):
+            if i + read_length < genome_length:
+                read = genome[i:i + read_length]
+            else:
+                read = genome[i:genome_length]
             reads.append((read, i))
             if len(reads) >= num_reads:
                 break
     else:
         for _ in range(num_reads):
             start = random.randint(0, genome_length - read_length)
-            read = genome[start:start + read_length]
+            if start + read_length < genome_length:
+                read = genome[start:start + read_length]
+            else:
+                read = genome[start:genome_length]
             reads.append((read, start))
 
     return reads
@@ -101,24 +107,24 @@ def main():
     read_length = 100
     mutation_rate = 0.1
     overlap = True
-    step = 1  # overlap 사용 시 window 간격
+    step = 3  # overlap 사용 시 window 간격
 
     # 1. 유전체 읽기
     reference_seq = read_limited_genome(fasta_file, genome_limit)
 
     # 2. 원본 시퀀스 저장
-    save_fasta(reference_seq, "data/reference.fasta", header=">reference")
+    save_fasta(reference_seq, output_path=f"data/n{genome_limit}_m{num_reads}_l{read_length}_reference.fasta", header=">reference")
 
     # 3. 변이 적용
     mutated_seq, mutations = mutate_sequence(reference_seq, mutation_rate)
 
     # 4. 변이된 시퀀스 및 변이 정보 저장
-    save_fasta(mutated_seq, "data/mutated.fasta", header=">mutated")
-    save_mutations_to_file(mutations, "data/mutations.csv")
+    save_fasta(mutated_seq, output_path=f"data/n{genome_limit}_m{num_reads}_l{read_length}_mutated.fasta", header=">mutated")
+    save_mutations_to_file(mutations,  output_path=f"data/n{genome_limit}_m{num_reads}_l{read_length}_mutations.csv")
 
     # 5. 변이된 유전체로부터 short read 생성 및 저장
     reads = generate_short_reads(mutated_seq, read_length, num_reads, overlap=overlap, step=step)
-    save_reads_to_fasta(reads, output_path=f"n{genome_limit}_m{num_reads}_l{read_length}_short_reads.fasta")
+    save_reads_to_fasta(reads, output_path=f"data/n{genome_limit}_m{num_reads}_l{read_length}_short_reads.fasta")
 
 
 if __name__ == '__main__':
