@@ -39,30 +39,29 @@ def get_occ(occ_table, c, i):
         return 0
     return occ_table[c][i]
 
-def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1):
-    matches = []
-    def search(i, l, r, mismatches, path):
-        if mismatches > max_mismatch:
-            return
-        if i < 0:
-            for j in range(l, r):
-                matches.append((j, mismatches, path[::-1]))
-            return
-        for a in c_table:
-            l2 = c_table[a] + get_occ(occ_table, a, l - 1)
-            r2 = c_table[a] + get_occ(occ_table, a, r - 1)
-            if l2 < r2:
-                mismatch_penalty = 0 if a == pattern[i] else 1
-                search(i - 1, l2, r2, mismatches + mismatch_penalty, path + a)
+# def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1):
+#     matches = []
+#     def search(i, l, r, mismatches, path):
+#         if mismatches > max_mismatch:
+#             return
+#         if i < 0:
+#             for j in range(l, r):
+#                 matches.append((j, mismatches, path[::-1]))
+#             return
+#         for a in c_table:
+#             l2 = c_table[a] + get_occ(occ_table, a, l - 1)
+#             r2 = c_table[a] + get_occ(occ_table, a, r - 1)
+#             if l2 < r2:
+#                 mismatch_penalty = 0 if a == pattern[i] else 1
+#                 search(i - 1, l2, r2, mismatches + mismatch_penalty, path + a)
+#
+#     search(len(pattern) - 1, 0, len(bwt), 0, "")
+#     return matches
 
-    search(len(pattern) - 1, 0, len(bwt), 0, "")
-    return matches
-
-def bwt_backward_search_bowtie(bwt, c_table, occ_table, pattern, max_mismatch=1, max_return=1):
+def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_return=1):
     matches = []
     pattern_len = len(pattern)
 
-    # mismatch 시도 순서를 뒤쪽부터 (Bowtie 스타일)
     mismatch_priority = list(range(pattern_len - 1, -1, -1))
 
     visited = set()
@@ -107,19 +106,16 @@ def main():
     # Short read
     read = "CGAC"
 
-    # Soft alignment 수행
-    matches = bwt_backward_search(bwt, c_table, occ_table, read, max_mismatch=1)
+    # # Soft alignment 수행
+    # matches = bwt_backward_search(bwt, c_table, occ_table, read, max_mismatch=1)
+    #
+    # # 결과 출력
+    # print("Read:", read)
+    # for idx, mismatches, aligned in matches:
+    #     pos = suffix_array[idx]
+    #     print(f"Match at pos {pos} (mismatches: {mismatches}) → aligned: {aligned}")
 
-    for i in range(13):
-        print(bwt[i] + ": " + str(suffix_array[i]))
-
-    # 결과 출력
-    print("Read:", read)
-    for idx, mismatches, aligned in matches:
-        pos = suffix_array[idx]
-        print(f"Match at pos {pos} (mismatches: {mismatches}) → aligned: {aligned}")
-
-    matches = bwt_backward_search_bowtie(
+    matches = bwt_backward_search(
         bwt, c_table, occ_table,
         read,
         max_mismatch=1,

@@ -3,7 +3,7 @@ import csv
 import random
 
 
-def mutate_sequence(seq, mutation_rate=0.1):
+def mutate_sequence(seq, mutation_rate=0.03):
     """
     주어진 염기서열에서 mutation_rate 비율로 무작위 변이를 일으킴
     :return: (변이된 시퀀스, 변이 정보 리스트)
@@ -102,9 +102,9 @@ def save_reads_to_fasta(reads, output_path="short_reads.fasta"):
 def main():
     # 설정값
     fasta_file = "data/GCF_000001405.40_GRCh38.p14_genomic.fna"
-    genome_limit = 30000000
-    num_reads = 10000000
-    read_length = 100
+    genome_limit = 300000
+    num_reads = 100000
+    read_length = 50
     mutation_rate = 0.1
     overlap = True
     step = 3  # overlap 사용 시 window 간격
