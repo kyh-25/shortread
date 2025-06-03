@@ -1,16 +1,23 @@
+import functools
 from collections import defaultdict
-
-def build_bwt(text,sa):
-    # text += "$"
-    # rotations = sorted([text[i:] + text[:i] for i in range(len(text))])
-    # bwt = ''.join(row[-1] for row in rotations)
-    # return bwt
-    return ''.join(text[i - 1] if i > 0 else '$' for i in sa)
 
 def build_suffix_array(text):
     """ 접미사 배열 생성 """
-    text += "$"
-    return sorted(range(len(text)), key=lambda i: text[i:])
+    text += '$'
+    def compare(i, j):
+        while i < len(text) and j < len(text):
+            if text[i] != text[j]:
+                return -1 if text[i] < text[j] else 1
+            i += 1
+            j += 1
+        return -1 if i == len(text) and j != len(text) else (1 if j == len(text) and i != len(text) else 0)
+
+    return sorted(range(len(text)), key=functools.cmp_to_key(compare))
+
+
+
+def build_bwt(text,sa):
+    return ''.join(text[i - 1] if i > 0 else '$' for i in sa)
 
 def build_occ_table(bwt):
     """ Occurrence 테이블: 특정 위치까지 각 문자가 몇 번 나왔는지를 저장 """
@@ -58,7 +65,7 @@ def get_occ(occ_table, c, i):
 #     search(len(pattern) - 1, 0, len(bwt), 0, "")
 #     return matches
 
-def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_return=1):
+def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_return=3):
     matches = []
     pattern_len = len(pattern)
 
@@ -67,15 +74,18 @@ def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_re
     visited = set()
 
     def search(i, l, r, mismatches, path, mismatch_positions):
+        #너무 많은 매치
         if len(matches) >= max_return:
             return
+        #오차 너무 많음
         if mismatches > max_mismatch:
             return
+        #패턴 다 탐색
         if i < 0:
             for j in range(l, r):
                 matches.append((j, mismatches, path[::-1], mismatch_positions))
             return
-
+        # 중복 방지
         key = (i, l, r, mismatches)
         if key in visited:
             return
@@ -105,15 +115,6 @@ def main():
 
     # Short read
     read = "CGAC"
-
-    # # Soft alignment 수행
-    # matches = bwt_backward_search(bwt, c_table, occ_table, read, max_mismatch=1)
-    #
-    # # 결과 출력
-    # print("Read:", read)
-    # for idx, mismatches, aligned in matches:
-    #     pos = suffix_array[idx]
-    #     print(f"Match at pos {pos} (mismatches: {mismatches}) → aligned: {aligned}")
 
     matches = bwt_backward_search(
         bwt, c_table, occ_table,

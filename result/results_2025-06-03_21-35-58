@@ -1,0 +1,2 @@
+genome_limit,num_reads,read_length,mutation_rate,max_mismatch,accuracy,time_sec
+300000,30000,50,0.03,2,0.80528,551.3979415893555
