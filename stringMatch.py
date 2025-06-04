@@ -1,5 +1,5 @@
 import functools
-from collections import defaultdict
+from collections import defaultdict,Counter
 
 def build_suffix_array(text):
     """ 접미사 배열 생성 """
@@ -46,24 +46,6 @@ def get_occ(occ_table, c, i):
         return 0
     return occ_table[c][i]
 
-# def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1):
-#     matches = []
-#     def search(i, l, r, mismatches, path):
-#         if mismatches > max_mismatch:
-#             return
-#         if i < 0:
-#             for j in range(l, r):
-#                 matches.append((j, mismatches, path[::-1]))
-#             return
-#         for a in c_table:
-#             l2 = c_table[a] + get_occ(occ_table, a, l - 1)
-#             r2 = c_table[a] + get_occ(occ_table, a, r - 1)
-#             if l2 < r2:
-#                 mismatch_penalty = 0 if a == pattern[i] else 1
-#                 search(i - 1, l2, r2, mismatches + mismatch_penalty, path + a)
-#
-#     search(len(pattern) - 1, 0, len(bwt), 0, "")
-#     return matches
 
 def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_return=3):
     matches = []
@@ -104,6 +86,40 @@ def bwt_backward_search(bwt, c_table, occ_table, pattern, max_mismatch=1, max_re
 
     search(len(pattern) - 1, 0, len(bwt), 0, "", [])
     return matches
+
+def reconstruct_sequence_BWT(reads, reference,max_mismatch=1):
+    # 인덱싱
+    sa = build_suffix_array(reference)
+    bwt = build_bwt(reference, sa)
+    occ = build_occ_table(bwt)
+    c_table = build_c_table(bwt)
+
+    # 각 위치에 복원할 base 후보 저장
+    coverage = defaultdict(list)
+
+    # 위치 탐색
+    for read, _ in reads:
+        matches = bwt_backward_search(bwt, c_table, occ, read, max_mismatch, max_return=1)
+        if matches:
+            sa_index = matches[0][0]
+            ref_pos = sa[sa_index]
+            # 삽입
+            for i in range(len(read)):
+                if ref_pos + i < len(reference):  # 범위 확인
+                    coverage[ref_pos + i].append(read[i])
+
+    # 복원 시퀀스 생성
+    reconstructed = []
+    for i in range(len(reference)):
+        bases = coverage.get(i, [])
+        if bases:
+            most_common = Counter(bases).most_common(1)[0][0]
+            reconstructed.append(most_common)
+        else:
+            reconstructed.append('N')  # 복원 불가능한 경우
+
+    return ''.join(reconstructed)
+
 
 def main():
     # 예시 참조 유전체

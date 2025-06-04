@@ -8,7 +8,7 @@ import seaborn as sns
 def main():
     # 그래프 시각화
     # 데이터 로드
-    df = pd.read_csv("result/results_2025-06-03_21-21-21")
+    df = pd.read_csv("result/results_2025-06-04_16-29-11")
 
     # 출력 디렉토리 생성
     output_dir = "figures"
@@ -21,7 +21,8 @@ def main():
     # 정확도 변화
     def plot_accuracy_vs(variable):
         plt.figure()
-        sns.lineplot(data=df, x=variable, y="accuracy", marker="o")
+        sns.lineplot(data=df, x=variable, y="BWT_accuracy", label="BWT", marker="o", color='orange')
+        sns.lineplot(data=df, x=variable, y="brute_accuracy", label="Brute Force", marker="s", color='blue')
         plt.title(f"Accuracy vs {variable}")
         plt.xlabel(variable)
         plt.ylabel("Accuracy")
@@ -33,7 +34,8 @@ def main():
     # 복원 시간 변화
     def plot_time_vs(variable):
         plt.figure()
-        sns.lineplot(data=df, x=variable, y="time_sec", marker="o", color='orange')
+        sns.lineplot(data=df, x=variable, y="BWT_time_sec", label="BWT", marker="o", color='orange')
+        sns.lineplot(data=df, x=variable, y="brute_time_sec", label="Brute Force", marker="s", color='blue')
         plt.title(f"Reconstruction Time vs {variable}")
         plt.xlabel(variable)
         plt.ylabel("Time (seconds)")
