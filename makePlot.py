@@ -40,12 +40,6 @@ def main():
         plt.savefig(f"{output_dir}/time_vs_{variable}.png")
         plt.close()
 
-    # 변수별로 시각화
-    # variables = ["genome_limit", "num_reads", "read_length", "mutation_rate", "max_mismatch"]
-    # for var in variables:
-    #     plot_accuracy_vs(var)
-    #     plot_time_vs(var)
-
     # 데이터 로드
     df = pd.read_csv("result/Ncomp.csv")
     var = "genome_limit"

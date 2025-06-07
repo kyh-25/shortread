@@ -3,7 +3,6 @@ import os
 import time
 from datetime import datetime
 
-from stringMatch import *
 from short_read import *
 from bruteForce import *
 

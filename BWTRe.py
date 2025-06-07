@@ -3,24 +3,16 @@ import os
 import time
 from datetime import datetime
 
-from stringMatch import *
+from BWTsearch import *
 from short_read import *
 from bruteForce import *
 
-def compare_sequences(seq1, seq2):
-    total = 0
-    match = 0
-    for a, b in zip(seq1, seq2):
-        total += 1
-        if a == b:
-            match += 1
-    accuracy = match / total if total > 0 else 0
-    return accuracy, match, total
-
+#원본 데이터 로드
 def load_fasta(filepath):
     with open(filepath) as f:
         return ''.join(line.strip() for line in f if not line.startswith(">"))
 
+#short read 데이터 로드
 def load_reads(filepath):
     reads = []
     with open(filepath) as f:
@@ -33,7 +25,22 @@ def load_reads(filepath):
                 reads.append((read, 0))  # start 위치는 쓰지 않음
     return reads
 
+# ---------------------------------------------------------------------------------
 
+#정확도 분석
+def compare_sequences(seq1, seq2):
+    total = 0
+    match = 0
+    for a, b in zip(seq1, seq2):
+        total += 1
+        if a == b:
+            match += 1
+    accuracy = match / total if total > 0 else 0
+    return accuracy, match, total
+
+# ---------------------------------------------------------------------------------
+
+# 원본 데이터로 short_read 생성
 def generate_data_if_not_exists(fasta_file, genome_limit, num_reads, read_length, mutation_rate, overlap, step):
     # 디렉토리 경로 생성
     case_dir = f"data/n{genome_limit}_m{num_reads}_l{read_length}_d{mutation_rate}"
@@ -63,7 +70,9 @@ def generate_data_if_not_exists(fasta_file, genome_limit, num_reads, read_length
 
     return reference_seq, mutated_seq, reads, case_dir
 
+# ---------------------------------------------------------------------------------
 
+#복원
 def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, step=3, max_mismatch=3):
     fasta_file = "data/GCF_000001405.40_GRCh38.p14_genomic.fna"
 
@@ -74,6 +83,7 @@ def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, 
     start_time = time.time()
     bwt_reconstructed = reconstruct_sequence_BWT(reads, reference,max_mismatch)
     end_time = time.time()
+    #시간 계산
     bwt_elapsed = end_time - start_time
 
     #결과 정확도
@@ -83,19 +93,6 @@ def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, 
     #확인용용
     save_fasta(bwt_reconstructed, os.path.join(case_dir, f"BWTreconstructed_d{max_mismatch}.fasta"), header=f">reconstructed_{bwt_accuracy}_{bwt_elapsed}")
    
-    # #브루트 포스 복원
-    # start_time = time.time()
-    # brute_reconstructed = reconstruct_sequence_brute_force(reads, reference,max_mismatch)
-    # end_time = time.time()
-    # brute_elapsed = end_time - start_time
-    
-    # #브루트 포스 결과 정확도
-    # brute_accuracy, matched, total = compare_sequences(brute_reconstructed, mutated)
-    # print(f"복원 정확도: {brute_accuracy * 100:.2f}%")
-    # print(f"→ 소요 시간: {brute_elapsed:.2f}초")
-    # #확인용
-    # save_fasta(brute_reconstructed, os.path.join(case_dir, f"Brutereconstructed_d{max_mismatch}.fasta"), header=f">reconstructed_{brute_accuracy}_{brute_accuracy}")
-
     return {
         "genome_limit": genome_limit,
         "num_reads": num_reads,
@@ -104,9 +101,9 @@ def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, 
         "max_mismatch":max_mismatch,
         "BWT_accuracy": bwt_accuracy,
         "BWT_time_sec": bwt_elapsed,
-        # "brute_accuracy": brute_accuracy,
-        # "brute_time_sec": brute_elapsed,
     }
+
+# ---------------------------------------------------------------------------------
 
 # 실행 메인
 def main():
@@ -117,39 +114,37 @@ def main():
     max_mismatch = 3
     overlap = False
 
+    #n, m, l, d 변수에 따른 케이스 설정
     cases = [
-        # n      m     l    변이률 overlap 간격  d
-        # L 변화
-        # (10000, 2000, 50, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 10, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 25, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 75, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 100, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 125, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 150, mutate, overlap, 10, max_mismatch),
-        # (100000, 20000, 150, mutate, overlap, 10, 4),
-        # (100000, 20000, 150, mutate, overlap, 10, 5),
-        # d 변화
-        # (100000, 20000, 50, mutate, overlap, 10, 1),
-        # (100000, 20000, 50, mutate, overlap, 10, 2),
-        # (100000, 20000, 50, mutate, overlap, 10, 3),
-        # (100000, 20000, 50, mutate, overlap, 10, 4),
-        # # m 변화
-        # #(100000, 20000, 50, mutate, overlap, 10, max_mismatch),
-        # (100000, 40000, 50, mutate, overlap, 10, max_mismatch),
-        # (100000, 60000, 50, mutate, overlap, 10, max_mismatch),
-        # #n 변화
-        # #(100000,  20000, 50, mutate, overlap, 10, max_mismatch),
-        # (300000,  60000, 50, mutate,  overlap, 10, max_mismatch),
-        # (1000000, 200000, 50, mutate, overlap, 10, max_mismatch),
-        # # (3000000, 600000, 50, mutate, overlap, 10, max_mismatch),
+        # n      m     l  변이률 overlap(랜덤으로 할건지) 간격(랜덤 아닐시 간격을 기준으로 추출)  d
+        #L 변화
+        (100000, 20000, 10, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 25, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 75, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 100, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 125, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 150, mutate, overlap, 10, max_mismatch),
+        (100000, 20000, 150, mutate, overlap, 10, 4),
+        (100000, 20000, 150, mutate, overlap, 10, 5),
+        #d 변화
+        (100000, 20000, 50, mutate, overlap, 10, 1),
+        (100000, 20000, 50, mutate, overlap, 10, 2),
+        (100000, 20000, 50, mutate, overlap, 10, 3),
+        (100000, 20000, 50, mutate, overlap, 10, 4),
+        # m 변화
+        (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
+        (100000, 40000, 50, mutate, overlap, 10, max_mismatch),
+        (100000, 60000, 50, mutate, overlap, 10, max_mismatch),
+        #n 변화
         (10000,  2000, 50, mutate, overlap, 10, max_mismatch),
         (30000,  6000, 50, mutate, overlap, 10, max_mismatch),
         (50000,  10000, 50, mutate, overlap, 10, max_mismatch),
         (70000,  14000, 50, mutate, overlap, 10, max_mismatch),
         (90000,  18000, 50, mutate, overlap, 10, max_mismatch),
         (120000,  24000, 50, mutate, overlap, 10, max_mismatch),
+        (300000,  60000, 50, mutate,  overlap, 10, max_mismatch),
+        (1000000, 200000, 50, mutate, overlap, 10, max_mismatch),
     ]
 
     results = []
