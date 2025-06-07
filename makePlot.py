@@ -6,10 +6,6 @@ import seaborn as sns
 
 
 def main():
-    # 그래프 시각화
-    # 데이터 로드
-    df = pd.read_csv("result/results_2025-06-04_16-29-11")
-
     # 출력 디렉토리 생성
     output_dir = "figures"
     os.makedirs(output_dir, exist_ok=True)
@@ -45,11 +41,16 @@ def main():
         plt.close()
 
     # 변수별로 시각화
-    variables = ["genome_limit", "num_reads", "read_length", "mutation_rate", "max_mismatch"]
-    for var in variables:
-        plot_accuracy_vs(var)
-        plot_time_vs(var)
+    # variables = ["genome_limit", "num_reads", "read_length", "mutation_rate", "max_mismatch"]
+    # for var in variables:
+    #     plot_accuracy_vs(var)
+    #     plot_time_vs(var)
 
+    # 데이터 로드
+    df = pd.read_csv("result/Ncomp.csv")
+    var = "genome_limit"
+    plot_accuracy_vs(var)
+    plot_time_vs(var)
 
 if __name__ == '__main__':
     main()

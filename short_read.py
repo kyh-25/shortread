@@ -98,38 +98,3 @@ def save_reads_to_fasta(reads, output_path="short_reads.fasta"):
         for i, (read, start_pos) in enumerate(reads):
             end_pos = start_pos + len(read)
             f.write(f">read_{i + 1}_{start_pos}_{end_pos}\n{read}\n")
-
-
-def main():
-    # 설정값
-    fasta_file = "data/GCF_000001405.40_GRCh38.p14_genomic.fna"
-    genome_limit = 3000
-    num_reads = 100
-    read_length = 50
-    mutation_rate = 0.1
-    overlap = False
-    step = 3  # overlap 사용 시 window 간격
-    # 디렉토리 경로 생성
-    case_dir = f"data/n{genome_limit}_m{num_reads}_l{read_length}_d{mutation_rate}"
-
-    # 디렉토리가 이미 존재하면 모든 데이터가 생성된 것으로 판단
-    if not os.path.exists(case_dir):
-        # 디렉토리 생성
-        os.makedirs(case_dir)
-        # 데이터 생성
-        # 1. 유전체 읽기
-        reference_seq = read_limited_genome(fasta_file, genome_limit)
-        # 2. 원본 시퀀스 저장
-        save_fasta(reference_seq, os.path.join(case_dir, "reference.fasta"), header=">reference")
-        # 3. 변이 적용
-        mutated_seq, mutations = mutate_sequence(reference_seq, mutation_rate)
-        # 4. 변이된 시퀀스 및 변이 정보 저장
-        save_fasta(mutated_seq, os.path.join(case_dir, "mutated.fasta"), header=">mutated")
-        save_mutations_to_file(mutations, os.path.join(case_dir, "mutations.csv"))
-        # 5. 변이된 유전체로부터 short read 생성 및 저장
-        reads = generate_short_reads(mutated_seq, read_length, num_reads, overlap=overlap, step=step)
-        save_reads_to_fasta(reads, os.path.join(case_dir, "short_reads.fasta"))
-
-
-if __name__ == '__main__':
-    main()

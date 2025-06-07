@@ -1,19 +1,38 @@
-import functools
 from collections import defaultdict,Counter
 
+#멘버-마이어 알고리즘
 def build_suffix_array(text):
-    """ 접미사 배열 생성 """
-    text += '$'
-    def compare(i, j):
-        while i < len(text) and j < len(text):
-            if text[i] != text[j]:
-                return -1 if text[i] < text[j] else 1
-            i += 1
-            j += 1
-        return -1 if i == len(text) and j != len(text) else (1 if j == len(text) and i != len(text) else 0)
+    text += '$'  # 종료 문자 추가 (모든 접미사를 유일하게 만듦)
+    n = len(text)
+    k = 1  # 초기 접두사 길이 (1, 2, 4, 8, ...)
+    
+    # 초기 랭크: 문자 아스키 코드
+    rank = [ord(c) for c in text]
+    tmp = [0] * n  # 새 랭크를 임시 저장
+    suffix_array = list(range(n))  # 초기 인덱스 배열
 
-    return sorted(range(len(text)), key=functools.cmp_to_key(compare))
+    while True:
+        # 랭크 쌍을 기반으로 접미사 정렬
+        #기본 sort = timsort
+        suffix_array.sort(key=lambda i: (rank[i], rank[i + k] if i + k < n else -1))
+        
+        # 새 랭크 계산
+        tmp[suffix_array[0]] = 0
+        for i in range(1, n):
+            prev = suffix_array[i - 1]
+            curr = suffix_array[i]
+            prev_rank = (rank[prev], rank[prev + k] if prev + k < n else -1)
+            curr_rank = (rank[curr], rank[curr + k] if curr + k < n else -1)
+            tmp[curr] = tmp[prev] + (1 if curr_rank != prev_rank else 0)
+        
+        rank = tmp[:]
 
+        if max(rank) == n - 1:
+            break  # 모든 접미사에 고유한 랭크 부여 완료
+
+        k *= 2  # 접두사 길이 두 배 증가
+
+    return suffix_array
 
 
 def build_bwt(text,sa):
@@ -24,16 +43,18 @@ def build_occ_table(bwt):
     occ = defaultdict(list)
     count = defaultdict(int)
     for i, char in enumerate(bwt):
-        count[char] += 1
+        count[char] += 1    #누적
         for c in set(bwt):
-            occ[c].append(count[c])
+            occ[c].append(count[c]) #테이블 채워넣기기
     return occ
 
 def build_c_table(bwt):
     """ C 테이블: 사전순으로 앞에 나오는 문자들의 개수 누적합 """
+    #각 문자별 카운트
     counts = defaultdict(int)
     for c in bwt:
         counts[c] += 1
+    #사전순으로 누적합
     c_table = {}
     total = 0
     for c in sorted(counts.keys()):

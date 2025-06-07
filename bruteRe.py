@@ -1,6 +1,6 @@
+# -*- coding: utf-8 -*-
 import os
 import time
-from collections import defaultdict, Counter
 from datetime import datetime
 
 from stringMatch import *
@@ -8,7 +8,6 @@ from short_read import *
 from bruteForce import *
 
 def compare_sequences(seq1, seq2):
-
     total = 0
     match = 0
     for a, b in zip(seq1, seq2):
@@ -71,30 +70,18 @@ def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, 
     #데이터 생성 혹은 로드
     reference, mutated, reads, case_dir = generate_data_if_not_exists(fasta_file, genome_limit, num_reads, read_length, mutation_rate, overlap, step)
 
-    #BWT복원
-    start_time = time.time()
-    bwt_reconstructed = reconstruct_sequence_BWT(reads, reference,max_mismatch)
-    end_time = time.time()
-    bwt_elapsed = end_time - start_time
-
-    #결과 정확도
-    bwt_accuracy, matched, total = compare_sequences(bwt_reconstructed, mutated)
-    print(f"복원 정확도: {bwt_accuracy * 100:.2f}%")
-    print(f"→ 소요 시간: {bwt_elapsed:.2f}초")
-
     #브루트 포스 복원
     start_time = time.time()
     brute_reconstructed = reconstruct_sequence_brute_force(reads, reference,max_mismatch)
     end_time = time.time()
     brute_elapsed = end_time - start_time
-
+    
     #브루트 포스 결과 정확도
-    brute_accuracy, matched, total = compare_sequences(bwt_reconstructed, mutated)
+    brute_accuracy, matched, total = compare_sequences(brute_reconstructed, mutated)
     print(f"복원 정확도: {brute_accuracy * 100:.2f}%")
     print(f"→ 소요 시간: {brute_elapsed:.2f}초")
-
     #확인용
-    save_fasta(bwt_reconstructed, os.path.join(case_dir, f"reconstructed_d{max_mismatch}.fasta"), header=">reconstructed")
+    save_fasta(brute_reconstructed, os.path.join(case_dir, f"Brutereconstructed_d{max_mismatch}.fasta"), header=f">reconstructed_{brute_accuracy}_{brute_elapsed}")
 
     return {
         "genome_limit": genome_limit,
@@ -102,9 +89,7 @@ def run_case(genome_limit, num_reads, read_length, mutation_rate, overlap=True, 
         "read_length": read_length,
         "mutation_rate": mutation_rate,
         "max_mismatch":max_mismatch,
-        "BWT_accuracy": bwt_accuracy,
-        "BWT_time_sec": bwt_elapsed,
-        "brute_accuracy": bwt_accuracy,
+        "brute_accuracy": brute_accuracy,
         "brute_time_sec": brute_elapsed,
     }
 
@@ -120,22 +105,28 @@ def main():
     cases = [
         # n      m     l    변이률 overlap 간격  d
         # L 변화
-        (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
-        (100000, 20000, 75, mutate, overlap, 10, max_mismatch),
-        (100000, 20000, 100, mutate, overlap, 10, max_mismatch),
-        (100000, 20000, 125, mutate, overlap, 10, max_mismatch),
-        (100000, 20000, 150, mutate, overlap, 10, max_mismatch),
-        # d 변화
-        (100000, 20000, 50, mutate, overlap, 10, 1),
-        (100000, 20000, 50, mutate, overlap, 10, 2),
-        (100000, 20000, 50, mutate, overlap, 10, 3),
-        (100000, 20000, 50, mutate, overlap, 10, 4),
-        # m 변화
-        (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
-        (100000, 40000, 50, mutate, overlap, 10, max_mismatch),
-        (100000, 60000, 50, mutate, overlap, 10, max_mismatch),
-        # #n 변화
-        # (100000,  20000, 50, mutate, overlap, 10, max_mismatch),
+        # # (10000, 2000, 50, mutate, overlap, 10, max_mismatch),
+        # (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
+        # (100000, 20000, 75, mutate, overlap, 10, max_mismatch),
+        # (100000, 20000, 100, mutate, overlap, 10, max_mismatch),
+        # (100000, 20000, 125, mutate, overlap, 10, max_mismatch),
+        # (100000, 20000, 150, mutate, overlap, 10, max_mismatch),
+        # # d 변화
+        # (100000, 20000, 50, mutate, overlap, 10, 1),
+        # (100000, 20000, 50, mutate, overlap, 10, 2),
+        # (100000, 20000, 50, mutate, overlap, 10, 3),
+        # (100000, 20000, 50, mutate, overlap, 10, 4),
+        # # m 변화
+        # (100000, 20000, 50, mutate, overlap, 10, max_mismatch),
+        # (100000, 40000, 50, mutate, overlap, 10, max_mismatch),
+        # (100000, 60000, 50, mutate, overlap, 10, max_mismatch),
+        #n 변화
+        (10000,  2000, 50, mutate, overlap, 10, max_mismatch),
+        (30000,  6000, 50, mutate, overlap, 10, max_mismatch),
+        (50000,  10000, 50, mutate, overlap, 10, max_mismatch),
+        (70000,  14000, 50, mutate, overlap, 10, max_mismatch),
+        (90000,  18000, 50, mutate, overlap, 10, max_mismatch),
+        (120000,  24000, 50, mutate, overlap, 10, max_mismatch),
         # (300000,  60000, 50, mutate,  overlap, 10, max_mismatch),
         # (1000000, 200000, 50, mutate, overlap, 10, max_mismatch),
         # (3000000, 600000, 50, mutate, overlap, 10, max_mismatch),
@@ -149,7 +140,7 @@ def main():
 
     # CSV로 저장
     now_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    with open(f"result/results_{now_str}", "w", newline='') as f:
+    with open(f"result/brute/results_{now_str}", "w", newline='') as f:
         writer = csv.DictWriter(f, fieldnames=results[0].keys())
         writer.writeheader()
         writer.writerows(results)
